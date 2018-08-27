@@ -1,4 +1,8 @@
 # proio for Python
+[![Build Status](https://travis-ci.org/proio-org/py-proio.svg?branch=master)](https://travis-ci.org/proio-org/py-proio)
+[![codecov](https://codecov.io/gh/proio-org/py-proio/branch/master/graph/badge.svg)](https://codecov.io/gh/proio-org/py-proio)
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/210b695adae14e7cb1803a191996bc1f)](https://www.codacy.com/app/decibelcooper/py-proio?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=proio-org/py-proio&amp;utm_campaign=Badge_Grade)
+
 ## API
 The API documentation is generated using Sphinx, and can be found
 [here](https://proio-org.github.io/py-proio-docs/).
