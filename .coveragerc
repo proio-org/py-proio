@@ -1,2 +1,2 @@
 [report]
-omit = py-proio/proio/proto/*, py-proio/proio/model/*
+omit = proio/proto/*, proio/model/*
