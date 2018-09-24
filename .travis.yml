@@ -13,7 +13,7 @@ matrix:
     include:
         - language: python
           stage: build
-          python: 2.7
+          python: 2.x
           install:
               - docker pull $DOCKER_AUX_REPO
               - sudo cp ci/protoc /bin/protoc
@@ -23,7 +23,7 @@ matrix:
               - python setup.py build_py
               - pytest
         - language: python
-          python: 3.6
+          python: 3.x
           install:
               - docker pull $DOCKER_AUX_REPO
               - sudo cp ci/protoc /bin/protoc
