@@ -3,6 +3,8 @@
 [![codecov](https://codecov.io/gh/proio-org/py-proio/branch/master/graph/badge.svg)](https://codecov.io/gh/proio-org/py-proio)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/c7084aee40fd459594e3646b152d1e43)](https://www.codacy.com/app/proio-org/py-proio?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=proio-org/py-proio&amp;utm_campaign=Badge_Grade)
 
+Please see the [main proio repository](https://github.com/proio-org/proio) for general information on proio.
+
 ## API
 The API documentation is generated using Sphinx, and can be found
 [here](https://proio-org.github.io/py-proio-docs/).
