@@ -80,7 +80,7 @@ class build_py(_build_py):
 
 setuptools.setup(
         name = 'proio',
-        version = '0.10',
+        version = '0.11',
         description = 'Library for reading and writing proio files and streams',
         url = 'http://github.com/proio-org/py-proio',
         author = 'David Blyth',
