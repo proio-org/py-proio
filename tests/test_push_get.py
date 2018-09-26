@@ -1,6 +1,8 @@
 import io
 import pytest
 
+import google.protobuf.descriptor_pb2 as descriptor_pb2
+
 import proio
 import proio.model.lcio as prolcio
 
@@ -12,6 +14,9 @@ def test_push_get2_lz4():
 
 def test_push_get3_lz4():
     push_get3(proio.LZ4)
+
+def test_push_get4_lz4():
+    push_get4(proio.LZ4)
 
 def test_push_skip_get1_lz4():
     push_skip_get1(proio.LZ4)
@@ -31,6 +36,9 @@ def test_push_get2_gzip():
 def test_push_get3_gzip():
     push_get3(proio.GZIP)
 
+def test_push_get4_gzip():
+    push_get4(proio.GZIP)
+
 def test_push_skip_get1_gzip():
     push_skip_get1(proio.GZIP)
 
@@ -48,6 +56,9 @@ def test_push_get2_uncompressed():
 
 def test_push_get3_uncompressed():
     push_get3(proio.UNCOMPRESSED)
+
+def test_push_get4_uncompressed():
+    push_get4(proio.UNCOMPRESSED)
 
 def test_push_skip_get1_uncompressed():
     push_skip_get1(proio.UNCOMPRESSED)
@@ -177,6 +188,26 @@ def push_get3(comp):
     buf2.seek(0, 0)
 
     with proio.Reader(fileobj = buf2) as reader:
+        for i in range(0, len(eventsOut)):
+            event = reader.__next__()
+            assert event != None
+            assert event.__str__() == eventsOut[i].__str__()
+
+def push_get4(comp):
+    buf = io.BytesIO(b'')
+    with proio.Writer(fileobj = buf) as writer:
+        writer.set_compression(comp)
+
+        eventsOut = []
+
+        event = proio.Event()
+        event.add_entry('test', descriptor_pb2.FileDescriptorProto())
+        writer.push(event)
+        eventsOut.append(event)
+
+    buf.seek(0, 0)
+
+    with proio.Reader(fileobj = buf) as reader:
         for i in range(0, len(eventsOut)):
             event = reader.__next__()
             assert event != None

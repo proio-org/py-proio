@@ -87,7 +87,8 @@ with proio.Writer(test_filename) as writer:
 
 ### Iterating events in a file
 ```python
-import proio.model.eic # each model to be read should be imported
+import proio # the model does not need to be imported when reading since proio
+             # is self-descriptive!
 
 test_filename = 'test_file.proio'
 n_events = 0
