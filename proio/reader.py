@@ -39,7 +39,9 @@ class Reader(object):
             self._stream_reader = open(filename, 'rb')
             self._close_file = True
 
-        self._bucket_reader = io.BytesIO(b'')
+        self._bucket_index = 0
+        self._bucket_header = None
+        self._bucket_reader = None
 
     def __enter__(self):
         return self
@@ -55,7 +57,15 @@ class Reader(object):
         :return: the next event
         :rtype: Event
         """
-        event = self._read_from_bucket(True)
+        event = None
+
+        # use skip() to ensure that we land on a non-empty bucket
+        self.skip(0)
+        if self._bucket_header is not None:
+            if self._bucket_reader is None:
+                self._read_bucket()
+            event = self._read_from_bucket()
+
         if event is None:
             raise StopIteration
         return event
@@ -74,17 +84,6 @@ class Reader(object):
         except:
             pass
 
-    def next_header(self):
-        """
-        returns the next event header.  This is useful for scanning the
-        stream/file.
-
-        :return: the next event header
-        :rtype: Event
-        """
-        self._read_bucket(sys.maxsize)
-        return self._bucket_header
-
     def skip(self, n_events):
         """
         skips the next `n_events` events.
@@ -93,25 +92,28 @@ class Reader(object):
         :return: number of events skipped
         :rtype: int
         """
-        try:
-            bucket_evts_left = self._bucket_header.nEvents - self._bucket_evts_read
-        except AttributeError:
-            bucket_evts_left = 0
-
         n_skipped = 0
-        if n_events > bucket_evts_left:
-            n_skipped += bucket_evts_left
-            while True:
-                n = self._read_bucket(n_events - n_skipped)
-                if n == 0:
-                    break
-                n_skipped += n
 
-        while n_skipped < n_events:
-            if self._read_from_bucket(False) == True:
-                n_skipped += 1
-            else:
-                break
+        start_index = self._bucket_index
+        self._bucket_index += n_events
+        while self._bucket_header is None or self._bucket_index >= self._bucket_header.nEvents:
+            if self._bucket_header is not None:
+                n_bucket_events = self._bucket_header.nEvents
+                self._bucket_index -= n_bucket_events
+                n_skipped += n_bucket_events - start_index
+
+                # skip the bucket bytes on the stream if they haven't been read
+                # into memory already
+                if n_bucket_events > 0 and self._bucket_reader is None:
+                    try:
+                        self._stream_reader.seek(self._bucket_header.bucketSize, 1)
+                    except OSError:
+                        self._stream_reader.read(self._bucket_header.bucketSize)
+            self._read_header()
+            if self._bucket_header is None:
+                return n_skipped
+            start_index = 0
+        n_skipped += self._bucket_index - start_index
 
         return n_skipped
 
@@ -119,61 +121,37 @@ class Reader(object):
         """
         seeks, if possible, to the start of the input file object.  This can be
         used along with :func:`skip` to directly access events.
+
+        :return: success
+        :rtype: boolean
         """
         if self._stream_reader.seekable():
             self._stream_reader.seek(0, 0)
-            self._bucket_reader = io.BytesIO(b'')
-            self._bucket_header = None
-            self._bucket_evts_read = 0
+            self._bucket_index = 0
+            self._read_header()
+            return True
+        return False
 
-    def _read_from_bucket(self, do_unmarshal = True):
-        proto_size_buf = self._bucket_reader.read(4)
-        if len(proto_size_buf) != 4:
-            self._read_bucket()
-            proto_size_buf = self._bucket_reader.read(4)
-            if len(proto_size_buf) != 4:
-                return
-
-        proto_size = struct.unpack("I", proto_size_buf)[0]
-        proto_buf = self._bucket_reader.read(proto_size)
-        if len(proto_buf) != proto_size:
-            return
-        self._bucket_evts_read += 1
-
-        if do_unmarshal:
-            event_proto = proto.Event.FromString(proto_buf)
-            return Event(proto_obj = event_proto)
-
-        return True
-
-    def _read_bucket(self, max_skip_events = 0):
+    def _read_header(self):
         self._bucket_evts_read = 0
-        events_skipped = 0
+        self._bucket_reader = None
         self._bucket_header = None
         
         n = self._sync_to_magic()
         if n < len(magic_bytes):
-            return events_skipped
+            return
 
         header_size = struct.unpack("I", self._stream_reader.read(4))[0]
         header_string = self._stream_reader.read(header_size)
         if len(header_string) != header_size:
-            return events_skipped
+            return
         self._bucket_header = proto.BucketHeader.FromString(header_string)
 
-        if self._bucket_header.nEvents > max_skip_events:
-            bucket = self._stream_reader.read(self._bucket_header.bucketSize)
-        else:
-            self._bucket_reader = io.BytesIO(b'')
-            events_skipped = self._bucket_header.nEvents
-            try:
-                self._stream_reader.seek(self._bucket_header.bucketSize, 1)
-            except OSError:
-                self._stream_reader.read(self._bucket_header.bucketSize)
-            return events_skipped
+    def _read_bucket(self):
+        bucket = self._stream_reader.read(self._bucket_header.bucketSize)
 
         if len(bucket) != self._bucket_header.bucketSize:
-            return events_skipped
+            raise EOFError
 
         if self._bucket_header.compression == proto.BucketHeader.GZIP:
             self._bucket_reader = gzip.GzipFile(fileobj = io.BytesIO(bucket), mode = 'rb')
@@ -183,10 +161,32 @@ class Reader(object):
             except ValueError:
                 uncomp_bytes = lz4.frame.decompress(bucket)
             self._bucket_reader = io.BytesIO(uncomp_bytes)
-        else:
+        elif self._bucket_header.compression == proto.BucketHeader.NONE:
             self._bucket_reader = io.BytesIO(bucket)
+        else:
+            raise UnknownBucketCompError
 
-        return events_skipped
+    def _read_from_bucket(self):
+        event = None
+
+        while self._bucket_evts_read <= self._bucket_index:
+            proto_size_buf = self._bucket_reader.read(4)
+            if len(proto_size_buf) != 4:
+                raise CorruptBucketError('Unable to read event size')
+
+            proto_size = struct.unpack("I", proto_size_buf)[0]
+            proto_buf = self._bucket_reader.read(proto_size)
+            if len(proto_buf) != proto_size:
+                raise CorruptBucketError('Unable to read event data')
+
+            if self._bucket_evts_read == self._bucket_index:
+                event_proto = proto.Event.FromString(proto_buf)
+                event = Event(proto_obj = event_proto)
+
+            self._bucket_evts_read += 1
+        self._bucket_index += 1
+
+        return event
 
     def _sync_to_magic(self):
         n_read = 0
@@ -212,3 +212,14 @@ class Reader(object):
 
         return n_read
 
+class UnknownBucketCompError(Exception):
+    """
+    raised when a bucket is compressed with an uknown type
+    """
+    pass
+
+class CorruptBucketError(Exception):
+    """
+    raised when there is a problem reading from a bucket
+    """
+    pass
