@@ -69,7 +69,12 @@ class Event(object):
             return None
 
         type_string = self._proto.type[entry_proto.type]
-        type_desc = descriptor_pool.Default().FindMessageTypeByName(type_string)
+        try:
+            type_desc = descriptor_pool.Default().FindMessageTypeByName(type_string)
+        except KeyError:
+            type_desc = None
+        if type_desc is None:
+            raise UnknownTypeError(type_string)
         msg_class = self._factory.GetPrototype(type_desc)
         entry = msg_class.FromString(entry_proto.payload)
         self._entry_cache[ID] = entry
@@ -209,3 +214,10 @@ class Event(object):
         for tag in self._proto.tag.values():
             tag.entry[:] = [ID for ID in tag.entry if ID in self._proto.entry]
         self._dirty_tags = False
+
+class UnknownTypeError(Exception):
+    """
+    Raised when an Event object is unable to deserialize a particular entry
+    type.
+    """
+    pass
