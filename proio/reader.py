@@ -4,6 +4,8 @@ import lz4.frame
 import struct
 import sys
 
+import google.protobuf.descriptor_pool as descriptor_pool
+
 from .event import Event
 import proio.proto as proto
 from .writer import magic_bytes
@@ -146,6 +148,10 @@ class Reader(object):
         if len(header_string) != header_size:
             return
         self._bucket_header = proto.BucketHeader.FromString(header_string)
+
+        # add descriptors to pool
+        for fd_bytes in self._bucket_header.fileDescriptor:
+            descriptor_pool.Default().AddSerializedFile(fd_bytes)
 
     def _read_bucket(self):
         bucket = self._stream_reader.read(self._bucket_header.bucketSize)
