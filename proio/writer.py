@@ -3,6 +3,8 @@ import io
 import lz4.frame
 import struct
 
+import google.protobuf.descriptor_pool as descriptor_pool
+
 import proio.proto as proto
 
 magic_bytes = [b'\xe1',
@@ -54,7 +56,9 @@ class Writer(object):
         self.bucket_dump_size = 0x1000000
 
         self._bucket_events = 0
+        self._header = proto.BucketHeader()
         self._bucket = io.BytesIO(b'')
+        self._written_fds = set()
         self.set_compression(proto.BucketHeader.GZIP)
 
     def __enter__(self):
@@ -96,11 +100,10 @@ class Writer(object):
         self._bucket.seek(0, 0)
         self._bucket.truncate(0)
 
-        header = proto.BucketHeader()
-        header.nEvents = self._bucket_events
-        header.bucketSize = len(bucket_bytes)
-        header.compression = self._comp
-        header_buf = header.SerializeToString()
+        self._header.nEvents = self._bucket_events
+        self._header.bucketSize = len(bucket_bytes)
+        self._header.compression = self._comp
+        header_buf = self._header.SerializeToString()
 
         header_size = struct.pack("I", len(header_buf))
 
@@ -111,6 +114,7 @@ class Writer(object):
         self._stream_writer.write(bucket_bytes)
 
         self._bucket_events = 0
+        self._header = proto.BucketHeader()
 
     def set_compression(self, comp):
         """
@@ -129,6 +133,22 @@ class Writer(object):
         """
         event._flush_cache()
         proto_buf = event._proto.SerializeToString()
+
+        # add new protobuf FileDescriptors to the stream that are required to
+        # describe event data
+        new_fds = set()
+        def add_fds_to_set(fd):
+            for dep in fd.dependencies:
+                add_fds_to_set(dep)
+            if fd not in self._written_fds:
+                new_fds.add(fd)
+                self._written_fds.add(fd)
+        for _, type_string in event._proto.type.items():
+            add_fds_to_set(descriptor_pool.Default().FindMessageTypeByName(type_string).file)
+        if len(new_fds) > 0:
+            self.flush()
+        for fd in new_fds:
+            self._header.fileDescriptor.append(fd.serialized_pb)
 
         proto_size = struct.pack("I", len(proto_buf))
 
