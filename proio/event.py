@@ -9,6 +9,8 @@ class Event(object):
     """
 
     def __init__(self, proto_obj = None):
+        self.metadata = {}
+
         self._proto = proto_obj or proto.Event()
         self._entry_cache = {}
         self._factory = message_factory.MessageFactory()

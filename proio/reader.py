@@ -44,6 +44,7 @@ class Reader(object):
         self._bucket_index = 0
         self._bucket_header = None
         self._bucket_reader = None
+        self._metadata = {}
 
     def __enter__(self):
         return self
@@ -129,6 +130,7 @@ class Reader(object):
         """
         if self._stream_reader.seekable():
             self._stream_reader.seek(0, 0)
+            self._metadata = {}
             self._bucket_index = 0
             self._read_header()
             return True
@@ -148,6 +150,10 @@ class Reader(object):
         if len(header_string) != header_size:
             return
         self._bucket_header = proto.BucketHeader.FromString(header_string)
+
+        # set metadata for future events
+        for key, value in self._bucket_header.metadata.items():
+            self._metadata[key] = value
 
         # add descriptors to pool
         for fd_bytes in self._bucket_header.fileDescriptor:
@@ -188,6 +194,8 @@ class Reader(object):
             if self._bucket_evts_read == self._bucket_index:
                 event_proto = proto.Event.FromString(proto_buf)
                 event = Event(proto_obj = event_proto)
+                for key, value in self._metadata.items():
+                    event.metadata[key] = value
 
             self._bucket_evts_read += 1
         self._bucket_index += 1

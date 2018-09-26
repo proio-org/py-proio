@@ -59,6 +59,7 @@ class Writer(object):
         self._header = proto.BucketHeader()
         self._bucket = io.BytesIO(b'')
         self._written_fds = set()
+        self._metadata = {}
         self.set_compression(proto.BucketHeader.GZIP)
 
     def __enter__(self):
@@ -131,6 +132,11 @@ class Writer(object):
 
         :param Event event: event to serialize to output
         """
+        for key, value in event.metadata.items():
+            if key not in self._metadata or self._metadata[key] != value:
+                self.push_metadata(key, value)
+                self._metadata[key] = value
+
         event._flush_cache()
         proto_buf = event._proto.SerializeToString()
 
@@ -160,3 +166,15 @@ class Writer(object):
         bucket_length = len(self._bucket.getvalue())
         if bucket_length > self.bucket_dump_size:
             self.flush()
+
+    def push_metadata(self, key, value):
+        """
+        takes a human-readable string key and a byte string value and inserts
+        it into the stream as metadata.  A reader will then assign these
+        metadata to events that follow in the stream.
+
+        :param string key: key
+        :param bytes value: value
+        """
+        self.flush()
+        self._header.metadata[key] = value
