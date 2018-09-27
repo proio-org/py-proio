@@ -157,7 +157,12 @@ class Reader(object):
 
         # add descriptors to pool
         for fd_bytes in self._bucket_header.fileDescriptor:
-            descriptor_pool.Default().AddSerializedFile(fd_bytes)
+            try:
+                descriptor_pool.Default().AddSerializedFile(fd_bytes)
+            except TypeError:
+                # ignore cases where types were already defined by another
+                # FileDescriptorProto
+                pass
 
     def _read_bucket(self):
         bucket = self._stream_reader.read(self._bucket_header.bucketSize)
