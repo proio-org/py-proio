@@ -13,7 +13,7 @@ from .writer import magic_bytes
 class Reader(object):
     """
     Reader for proio files
-    
+
     This class can be used with the `with` statement, and it also may be used
     as an iterator that sequentially iterates all events.  A filename may be
     omitted in favor of specifying `fileobj`.
@@ -84,7 +84,7 @@ class Reader(object):
         try:
             if self._close_file:
                 self._stream_reader.close()
-        except:
+        except AttributeError:
             pass
 
     def skip(self, n_events):

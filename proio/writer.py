@@ -27,7 +27,7 @@ magic_bytes = [b'\xe1',
 class Writer(object):
     """
     Writer for proio files
-    
+
     This class can be used with the `with` statement.  A filename may be
     omitted in favor of specifying `fileobj`.
 
@@ -77,7 +77,7 @@ class Writer(object):
         try:
             if self._close_file:
                 self._stream_writer.close()
-        except:
+        except AttributeError:
             pass
 
     def flush(self):
