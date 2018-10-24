@@ -16,7 +16,7 @@ matrix:
           python: 2.7
           install:
               - docker pull $DOCKER_AUX_REPO
-              - sudo cp ci/protoc /bin/protoc
+              - sudo cp .ci/protoc /bin/protoc
               - sudo chmod +x /bin/protoc
               - pip install --upgrade pytest protobuf lz4
           script:
@@ -26,7 +26,7 @@ matrix:
           python: 3.6
           install:
               - docker pull $DOCKER_AUX_REPO
-              - sudo cp ci/protoc /bin/protoc
+              - sudo cp .ci/protoc /bin/protoc
               - sudo chmod +x /bin/protoc
               - pip install --upgrade pytest pytest-coverage codecov protobuf lz4
           script:
@@ -37,7 +37,7 @@ matrix:
           python: nightly
           install:
               - docker pull $DOCKER_AUX_REPO
-              - sudo cp ci/protoc /bin/protoc
+              - sudo cp .ci/protoc /bin/protoc
               - sudo chmod +x /bin/protoc
               - pip install --upgrade pytest protobuf lz4
           script:
@@ -48,7 +48,7 @@ matrix:
           stage: doc
           install:
               - docker pull $DOCKER_AUX_REPO
-              - sudo cp ci/protoc /bin/protoc
+              - sudo cp .ci/protoc /bin/protoc
               - sudo chmod +x /bin/protoc
               - pip install --upgrade sphinx pkginfo
           script:
@@ -61,7 +61,7 @@ matrix:
           stage: deploy
           install:
               - docker pull $DOCKER_AUX_REPO
-              - sudo cp ci/protoc /bin/protoc
+              - sudo cp .ci/protoc /bin/protoc
               - sudo chmod +x /bin/protoc
               - pip install --upgrade protobuf lz4
           script:
