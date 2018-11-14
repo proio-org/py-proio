@@ -22,7 +22,7 @@ class Reader(object):
     :param fileobj: file object to read from
 
     :example:
-    
+
     .. code-block:: python
 
         with proio.Reader('input.proio') as reader:
