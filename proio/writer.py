@@ -35,7 +35,7 @@ class Writer(object):
     :param fileobj: file object to write to
 
     :example:
-    
+
     .. code-block:: python
 
         with proio.Writer('output.proio') as writer:
