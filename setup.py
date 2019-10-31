@@ -7,6 +7,7 @@ import sys
 
 from distutils.command.clean import clean as _clean
 from distutils.spawn import find_executable
+from os import path
 from os.path import basename
 from os.path import splitext
 
@@ -78,13 +79,20 @@ class build_py(_build_py):
 
         _build_py.run(self)
 
+# read the contents of the README.md file
+this_directory = path.abspath(path.dirname(__file__))
+with open(path.join(this_directory, 'README.md')) as f:
+    long_description = f.read()
+
 setuptools.setup(
         name = 'proio',
         version = '0.12',
         description = 'Library for reading and writing proio files and streams',
+        long_description = long_description,
+        long_description_content_type='text/markdown',
         url = 'http://github.com/proio-org/py-proio',
         author = 'David Blyth',
-        author_email = 'dblyth@anl.gov',
+        author_email = 'dblyth@decibelcooper.net',
         license = 'BSD-3-Clause',
         packages = setuptools.find_packages(),
         install_requires = ['protobuf==3.*', 'lz4==2.*'],
