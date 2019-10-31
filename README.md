@@ -3,7 +3,25 @@
 [![codecov](https://codecov.io/gh/proio-org/py-proio/branch/master/graph/badge.svg)](https://codecov.io/gh/proio-org/py-proio)
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/c7084aee40fd459594e3646b152d1e43)](https://www.codacy.com/app/proio-org/py-proio?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=proio-org/py-proio&amp;utm_campaign=Badge_Grade)
 
-Please see the [main proio repository](https://github.com/proio-org/proio) for general information on proio.
+Proio is an event-oriented streaming data format based on Google's [protocol
+buffers](https://developers.google.com/protocol-buffers/) (protobuf).  Proio
+aims to add event structure and additional compression to protobuf in a way
+that supports event data model serialization in medium- and high-energy
+physics.  Additionally, proio
+* supports self-descriptive data,
+* is stream compatible,
+* is language agnostic,
+* and brings along many advantages of protobuf, including forward/backward
+  compatibility.
+
+For detailed information on the proio format and introductory information on
+the software implementations, please see [DOI
+10.1016/j.cpc.2019.03.018](https://doi.org/10.1016/j.cpc.2019.03.018).  This
+work was inspired and influenced by [LCIO](https://github.com/iLCSoft/LCIO),
+ProMC (Sergei Chekanov), and EicMC (Alexander Kiselev)
+
+Also see the [main proio repository](https://github.com/proio-org/proio) for
+additional information information.
 
 ## API
 The API documentation is generated using Sphinx, and can be found
