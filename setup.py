@@ -85,20 +85,20 @@ with open(path.join(this_directory, 'README.md')) as f:
     long_description = f.read()
 
 setuptools.setup(
-        name = 'proio',
-        version = '0.12',
-        description = 'Library for reading and writing proio files and streams',
-        long_description = long_description,
+        name='proio',
+        version='0.12',
+        description='Library for reading and writing proio files and streams',
+        long_description=long_description,
         long_description_content_type='text/markdown',
-        url = 'http://github.com/proio-org/py-proio',
-        author = 'David Blyth',
-        author_email = 'dblyth@decibelcooper.net',
-        license = 'BSD-3-Clause',
-        packages = setuptools.find_packages(),
-        install_requires = ['protobuf==3.*', 'lz4==2.*'],
-        zip_safe = True,
-        cmdclass = {
+        url='http://github.com/proio-org/py-proio',
+        author='David Blyth',
+        author_email='dblyth@decibelcooper.net',
+        license='BSD-3-Clause',
+        packages=setuptools.find_packages(),
+        install_requires=['protobuf==3.*', 'lz4==2.*'],
+        zip_safe=True,
+        cmdclass={
             'clean': clean,
             'build_py' : build_py,
-            }
+            },
       )
